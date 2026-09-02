@@ -22,10 +22,15 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        # --ignore-scripts skips the native build of an optional transitive
-        # dependency (isolated-vm) that is only used by the local `dev` runner
-        # and is not needed for lint, build or tests.
-        run: npm ci --ignore-scripts
+        # We use `npm install` (not `npm ci`) with --ignore-scripts:
+        #   - --ignore-scripts skips the native build of an optional transitive
+        #     dependency (isolated-vm, used only by the local `dev` runner) that
+        #     is not needed for lint, build or tests.
+        #   - `npm install` (vs `npm ci`) tolerates the optional/platform-specific
+        #     native sub-deps (e.g. @emnapi/*) that make a cross-platform lockfile
+        #     brittle under the strict `npm ci` check. The lockfile is still
+        #     committed and honoured as the resolution baseline.
+        run: npm install --ignore-scripts --no-audit --no-fund
 
       - name: Lint
         run: npm run lint
