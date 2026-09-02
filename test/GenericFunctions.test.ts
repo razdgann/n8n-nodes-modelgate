@@ -13,19 +13,17 @@ import {
 
 describe('normalizeBaseUrl', () => {
 	it('strips trailing slashes', () => {
-		expect(normalizeBaseUrl('https://api.modelgatehq.com/')).toBe('https://api.modelgatehq.com');
-		expect(normalizeBaseUrl('https://api.modelgatehq.com///')).toBe('https://api.modelgatehq.com');
+		expect(normalizeBaseUrl('https://gw.modelgatehq.com/')).toBe('https://gw.modelgatehq.com');
+		expect(normalizeBaseUrl('https://gw.modelgatehq.com///')).toBe('https://gw.modelgatehq.com');
 	});
 
 	it('trims whitespace', () => {
-		expect(normalizeBaseUrl('  https://api.modelgatehq.com  ')).toBe(
-			'https://api.modelgatehq.com',
-		);
+		expect(normalizeBaseUrl('  https://gw.modelgatehq.com  ')).toBe('https://gw.modelgatehq.com');
 	});
 
-	it('falls back to the default when empty', () => {
-		expect(normalizeBaseUrl('')).toBe('https://api.modelgatehq.com');
-		expect(normalizeBaseUrl(undefined as unknown as string)).toBe('https://api.modelgatehq.com');
+	it('falls back to the gateway default when empty', () => {
+		expect(normalizeBaseUrl('')).toBe('https://gw.modelgatehq.com');
+		expect(normalizeBaseUrl(undefined as unknown as string)).toBe('https://gw.modelgatehq.com');
 	});
 
 	it('preserves a custom host', () => {
@@ -34,9 +32,18 @@ describe('normalizeBaseUrl', () => {
 });
 
 describe('buildChatCompletionsUrl', () => {
-	it('appends the chat completions path exactly once', () => {
-		expect(buildChatCompletionsUrl('https://api.modelgatehq.com/')).toBe(
-			'https://api.modelgatehq.com/v1/chat/completions',
+	it('appends the chat completions path to the gateway origin', () => {
+		expect(buildChatCompletionsUrl('https://gw.modelgatehq.com/')).toBe(
+			'https://gw.modelgatehq.com/v1/chat/completions',
+		);
+	});
+
+	it('does not double the /v1 segment when the base already ends in /v1', () => {
+		expect(buildChatCompletionsUrl('https://gw.modelgatehq.com/v1')).toBe(
+			'https://gw.modelgatehq.com/v1/chat/completions',
+		);
+		expect(buildChatCompletionsUrl('https://gw.modelgatehq.com/v1/')).toBe(
+			'https://gw.modelgatehq.com/v1/chat/completions',
 		);
 	});
 
@@ -202,6 +209,14 @@ describe('parseModelGateError', () => {
 		});
 		expect(parsed.requestId).toBe('req_err');
 		expect(parsed.description).toContain('req_err');
+	});
+
+	it('surfaces a flat gateway error body { error: "invalid_api_key" }', () => {
+		const parsed = parseModelGateError({
+			response: { statusCode: 401, body: { error: 'invalid_api_key' } },
+		});
+		expect(parsed.description).toContain('invalid_api_key');
+		expect(parsed.errorCode).toBe('invalid_api_key');
 	});
 
 	it('surfaces the provider error message and code from the body', () => {

@@ -44,16 +44,23 @@ Create a **ModelGate API** credential:
 | Field    | Required | Default                        | Notes                                                            |
 | -------- | -------- | ------------------------------ | ---------------------------------------------------------------- |
 | API Key  | Yes      | —                              | Your ModelGate key. It starts with `mg_`. Stored encrypted.      |
-| Base URL | No       | `https://api.modelgatehq.com`  | Override only for staging / self-hosted ModelGate environments.  |
+| Base URL | No       | `https://gw.modelgatehq.com`   | The gateway **origin** (no path). Override only for staging / self-hosted gateways. A trailing `/v1` is tolerated and de-duplicated. |
 
 The API key is sent as an `Authorization: Bearer <key>` header. It is never
 written to logs, error messages or node output.
 
-**Credential test:** the credential is validated with a safe, authenticated
-`GET /v1/models` request (the standard OpenAI-compatible models listing). This
-never fires a paid completion. If a particular ModelGate deployment does not
-expose `/v1/models`, the credential test may report a valid key as invalid — the
-node itself still validates the key on the first real request.
+**Auth header:** the ModelGate gateway accepts both `Authorization: Bearer mg_…`
+and `x-api-key: mg_…`. This node uses **Bearer** because it calls the
+OpenAI-compatible `/v1/chat/completions` endpoint, where Bearer is the standard
+header every OpenAI-compatible client sends; it is verified to be accepted.
+
+**Credential test:** there is **no** credential test. A credential test must call
+an endpoint that both validates the key and is safe/free to call, and the gateway
+currently exposes none: `GET /health` is unauthenticated (it would not validate
+the key), there is no capability-discovery endpoint (`GET /v1/models` returns
+404), and the only authenticated endpoints are paid inference endpoints. Rather
+than ship a broken or false-positive test, the key is validated on the first real
+request, which surfaces a clear `401 invalid_api_key` for a bad key.
 
 ## Operations
 
@@ -260,7 +267,7 @@ workflow and execute it.
 
   ```bash
   export MODELGATE_E2E_API_KEY=mg_your_key
-  export MODELGATE_E2E_BASE_URL=https://api.modelgatehq.com   # optional
+  export MODELGATE_E2E_BASE_URL=https://gw.modelgatehq.com   # optional
   export MODELGATE_E2E_MODEL=gpt-5                            # optional
   npm run test:e2e
   ```
@@ -275,7 +282,7 @@ workflow and execute it.
   Bearer header by n8n's authenticated request helper — it never appears in node
   code, logs, errors or output.
 - Requests are only ever sent to the origin configured in the credential
-  (default `https://api.modelgatehq.com`) with a fixed API path appended. Workflow
+  (default `https://gw.modelgatehq.com`) with a fixed API path appended. Workflow
   data cannot redirect the request to another host.
 - Error messages surface ModelGate's safe machine-readable error info and request
   id, but never credentials or request headers.

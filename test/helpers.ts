@@ -28,7 +28,7 @@ export function createExecuteMock(options: MockContextOptions): MockContext {
 	const {
 		items,
 		params,
-		credentials = { apiKey: 'mg_test_key', baseUrl: 'https://api.modelgatehq.com' },
+		credentials = { apiKey: 'mg_test_key', baseUrl: 'https://gw.modelgatehq.com' },
 		continueOnFail = false,
 		httpResponse,
 		httpError,

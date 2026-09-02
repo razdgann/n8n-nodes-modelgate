@@ -55,14 +55,22 @@ export interface UserMetadataEntry {
 export function normalizeBaseUrl(baseUrl: string): string {
 	const trimmed = (baseUrl ?? '').trim();
 	if (trimmed === '') {
-		return 'https://api.modelgatehq.com';
+		return 'https://gw.modelgatehq.com';
 	}
 	return trimmed.replace(/\/+$/, '');
 }
 
-/** Build the full chat-completions URL from a (possibly messy) base URL. */
+/**
+ * Build the full chat-completions URL from a (possibly messy) base URL.
+ *
+ * The canonical Base URL is the gateway origin (e.g. https://gw.modelgatehq.com)
+ * and the node appends /v1/chat/completions. ModelGate's public docs also present
+ * the base as https://gw.modelgatehq.com/v1, so we defensively strip a trailing
+ * /v1 first to avoid producing .../v1/v1/chat/completions.
+ */
 export function buildChatCompletionsUrl(baseUrl: string): string {
-	return `${normalizeBaseUrl(baseUrl)}${CHAT_COMPLETIONS_PATH}`;
+	const base = normalizeBaseUrl(baseUrl).replace(/\/v1$/, '');
+	return `${base}${CHAT_COMPLETIONS_PATH}`;
 }
 
 /** Turn a single free-form prompt into an OpenAI-style messages array. */
@@ -178,9 +186,14 @@ export function parseModelGateError(error: unknown): ParsedError {
 
 	const requestId = extractRequestId(err.response?.headers as Record<string, unknown> | undefined);
 
-	// ModelGate/OpenAI-compatible error bodies look like { error: { message, code, type } }.
+	// ModelGate error bodies come in two shapes:
+	//   - flat:   { "error": "invalid_api_key" }              (gateway auth/validation errors)
+	//   - nested: { "error": { message, code, type } }        (OpenAI-compatible provider errors)
 	const body = err.response?.body as
-		| { error?: { message?: string; code?: string; type?: string }; message?: string }
+		| {
+				error?: { message?: string; code?: string; type?: string } | string;
+				message?: string;
+		  }
 		| string
 		| undefined;
 
@@ -189,8 +202,17 @@ export function parseModelGateError(error: unknown): ParsedError {
 	if (typeof body === 'string') {
 		providerMessage = body.slice(0, 500);
 	} else if (body && typeof body === 'object') {
-		providerMessage = body.error?.message ?? body.message;
-		errorCode = body.error?.code ?? body.error?.type;
+		const bodyError = body.error;
+		if (typeof bodyError === 'string') {
+			providerMessage = bodyError;
+			errorCode = bodyError;
+		} else if (bodyError && typeof bodyError === 'object') {
+			providerMessage = bodyError.message;
+			errorCode = bodyError.code ?? bodyError.type;
+		}
+		if (!providerMessage) {
+			providerMessage = body.message;
+		}
 	}
 
 	let message: string;

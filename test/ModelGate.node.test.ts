@@ -30,7 +30,7 @@ describe('ModelGate node — request mapping', () => {
 
 		const opts = sentOptions(httpMock);
 		expect(opts.method).toBe('POST');
-		expect(opts.url).toBe('https://api.modelgatehq.com/v1/chat/completions');
+		expect(opts.url).toBe('https://gw.modelgatehq.com/v1/chat/completions');
 		expect(opts.json).toBe(true);
 		expect(opts.returnFullResponse).toBe(true);
 		expect(opts.body.model).toBe('gpt-5');
@@ -251,7 +251,7 @@ describe('ModelGate node — response mapping', () => {
 		const { ctx } = createExecuteMock({
 			items: [{ json: {} }],
 			params: { inputType: 'prompt', model: 'gpt-5', prompt: 'Hi', simplify: false, options: {} },
-			credentials: { apiKey: 'mg_supersecret', baseUrl: 'https://api.modelgatehq.com' },
+			credentials: { apiKey: 'mg_supersecret', baseUrl: 'https://gw.modelgatehq.com' },
 			httpResponse: okResponse(),
 		});
 

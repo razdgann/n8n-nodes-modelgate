@@ -5,7 +5,7 @@
  * executes when a real ModelGate API key is provided via environment variables:
  *
  *   MODELGATE_E2E_API_KEY   (required)  your ModelGate key, e.g. mg_...
- *   MODELGATE_E2E_BASE_URL  (optional)  defaults to https://api.modelgatehq.com
+ *   MODELGATE_E2E_BASE_URL  (optional)  defaults to https://gw.modelgatehq.com
  *   MODELGATE_E2E_MODEL     (optional)  defaults to gpt-5
  *
  * Run with:  npm run test:e2e
@@ -24,7 +24,7 @@ import {
 } from '../nodes/ModelGate/GenericFunctions';
 
 const apiKey = process.env.MODELGATE_E2E_API_KEY;
-const baseUrl = process.env.MODELGATE_E2E_BASE_URL ?? 'https://api.modelgatehq.com';
+const baseUrl = process.env.MODELGATE_E2E_BASE_URL ?? 'https://gw.modelgatehq.com';
 const model = process.env.MODELGATE_E2E_MODEL ?? 'gpt-5';
 
 // Skip the whole suite unless a key is present.

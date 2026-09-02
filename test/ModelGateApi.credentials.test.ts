@@ -15,9 +15,9 @@ describe('ModelGateApi credential', () => {
 		expect(apiKey?.type).toBe('string');
 	});
 
-	it('defaults the base URL to the production ModelGate origin', () => {
+	it('defaults the base URL to the production ModelGate gateway origin', () => {
 		const baseUrl = cred.properties.find((p) => p.name === 'baseUrl');
-		expect(baseUrl?.default).toBe('https://api.modelgatehq.com');
+		expect(baseUrl?.default).toBe('https://gw.modelgatehq.com');
 	});
 
 	it('builds the Authorization header as a Bearer token from the credential', () => {
@@ -30,12 +30,11 @@ describe('ModelGateApi credential', () => {
 		expect(serialized).not.toMatch(/mg_[a-zA-Z0-9]/);
 	});
 
-	it('defines a safe, authenticated credential test that normalizes the base URL', () => {
-		expect(cred.test).toBeDefined();
-		expect(cred.test?.request.method).toBe('GET');
-		expect(cred.test?.request.url).toBe('/v1/models');
-		// The test must not fire a paid completion.
-		expect(cred.test?.request.url).not.toContain('chat/completions');
-		expect(String(cred.test?.request.baseURL)).toContain('$credentials.baseUrl');
+	it('intentionally defines no credential test (no safe authenticated endpoint exists)', () => {
+		// The gateway offers no safe, authenticated, zero-cost endpoint to test a
+		// key: /health is unauthenticated, /v1/models does not exist, and the only
+		// authenticated endpoints are paid inference endpoints. We deliberately omit
+		// the test rather than ship a broken or false-positive one.
+		expect((cred as unknown as { test?: unknown }).test).toBeUndefined();
 	});
 });
