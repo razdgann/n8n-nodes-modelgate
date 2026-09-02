@@ -1,0 +1,18 @@
+{
+	"node": "n8n-nodes-modelgate.modelGate",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["AI", "Miscellaneous"],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": "https://github.com/razdgann/n8n-nodes-modelgate#credentials"
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "https://github.com/razdgann/n8n-nodes-modelgate#readme"
+			}
+		]
+	}
+}

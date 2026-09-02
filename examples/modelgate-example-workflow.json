@@ -1,0 +1,67 @@
+{
+	"name": "ModelGate — Simple Prompt Example",
+	"nodes": [
+		{
+			"parameters": {},
+			"id": "b1a1e9d2-0001-4a10-9a01-000000000001",
+			"name": "When clicking 'Test workflow'",
+			"type": "n8n-nodes-base.manualTrigger",
+			"typeVersion": 1,
+			"position": [0, 0]
+		},
+		{
+			"parameters": {
+				"assignments": {
+					"assignments": [
+						{
+							"id": "a1000000-0000-0000-0000-000000000001",
+							"name": "prompt",
+							"type": "string",
+							"value": "Write a two-line haiku about workflow automation."
+						}
+					]
+				},
+				"options": {}
+			},
+			"id": "b1a1e9d2-0002-4a10-9a01-000000000002",
+			"name": "Set Prompt",
+			"type": "n8n-nodes-base.set",
+			"typeVersion": 3.4,
+			"position": [220, 0]
+		},
+		{
+			"parameters": {
+				"inputType": "prompt",
+				"model": "gpt-5",
+				"prompt": "={{ $json.prompt }}",
+				"simplify": true,
+				"options": {
+					"temperature": 0.7,
+					"maxTokens": 256
+				}
+			},
+			"id": "b1a1e9d2-0003-4a10-9a01-000000000003",
+			"name": "ModelGate",
+			"type": "n8n-nodes-modelgate.modelGate",
+			"typeVersion": 1,
+			"position": [440, 0],
+			"credentials": {
+				"modelGateApi": {
+					"id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+					"name": "ModelGate account"
+				}
+			}
+		}
+	],
+	"connections": {
+		"When clicking 'Test workflow'": {
+			"main": [[{ "node": "Set Prompt", "type": "main", "index": 0 }]]
+		},
+		"Set Prompt": {
+			"main": [[{ "node": "ModelGate", "type": "main", "index": 0 }]]
+		}
+	},
+	"active": false,
+	"settings": { "executionOrder": "v1" },
+	"pinData": {}
+}
