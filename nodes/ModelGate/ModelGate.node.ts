@@ -59,7 +59,7 @@ export class ModelGate implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'ModelGate',
 		name: 'modelGate',
-		icon: { light: 'file:modelgate.svg', dark: 'file:modelgate.dark.svg' },
+		icon: 'file:modelgate.png',
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{"Model: " + $parameter["model"]}}',

@@ -5,10 +5,7 @@ export class ModelGateApi implements ICredentialType {
 
 	displayName = 'ModelGate API';
 
-	icon: Icon = {
-		light: 'file:../nodes/ModelGate/modelgate.svg',
-		dark: 'file:../nodes/ModelGate/modelgate.dark.svg',
-	};
+	icon: Icon = 'file:../nodes/ModelGate/modelgate.png';
 
 	documentationUrl = 'https://modelgatehq.com';
 
