@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-modelgate",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "n8n community node for ModelGate — call any LLM through the ModelGate gateway with automatic cost, token and usage tracking.",
 	"license": "MIT",
 	"homepage": "https://modelgatehq.com",
