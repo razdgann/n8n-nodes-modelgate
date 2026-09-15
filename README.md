@@ -289,9 +289,11 @@ workflow and execute it.
 
 ## Icon
 
-The node ships with a neutral placeholder icon. Replace
-`nodes/ModelGate/modelgate.svg` and `nodes/ModelGate/modelgate.dark.svg` with the
-official ModelGate logo before publishing if desired.
+The node and the **ModelGate API** credential both use the official ModelGate
+logo, shipped as `nodes/ModelGate/modelgate.svg` (n8n requires SVG icons; the
+official 512×512 logo is embedded losslessly inside it). To rebrand, replace that
+file with another SVG and, if you rename it, update the `icon` references in
+`nodes/ModelGate/ModelGate.node.ts` and `credentials/ModelGateApi.credentials.ts`.
 
 ## License
 
