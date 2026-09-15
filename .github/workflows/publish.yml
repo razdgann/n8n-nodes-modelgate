@@ -44,6 +44,13 @@ on:
       # Matches 0.1.0, 1.2.3, 2.0.0-rc.1, etc. `n8n-node release` (release-it)
       # creates unprefixed tags by default. Change to 'v*.*.*' if you prefer.
       - '*.*.*'
+  # Manual trigger: publish the version currently in package.json from a chosen
+  # branch (normally main). Use this to (re)publish after a workflow/config fix
+  # when the existing version tag points at a pre-fix commit — re-running the
+  # tag's workflow would check out the old commit and repeat the failure.
+  # Provenance is still generated (the attestation covers this repo + commit +
+  # workflow run, and does not require a tag ref).
+  workflow_dispatch:
 
 jobs:
   publish:
