@@ -54,13 +54,19 @@ and `x-api-key: mg_…`. This node uses **Bearer** because it calls the
 OpenAI-compatible `/v1/chat/completions` endpoint, where Bearer is the standard
 header every OpenAI-compatible client sends; it is verified to be accepted.
 
-**Credential test:** there is **no** credential test. A credential test must call
-an endpoint that both validates the key and is safe/free to call, and the gateway
-currently exposes none: `GET /health` is unauthenticated (it would not validate
-the key), there is no capability-discovery endpoint (`GET /v1/models` returns
-404), and the only authenticated endpoints are paid inference endpoints. Rather
-than ship a broken or false-positive test, the key is validated on the first real
-request, which surfaces a clear `401 invalid_api_key` for a bad key.
+**Credential test:** clicking **Test** (or saving the credential) verifies the
+key by sending the smallest possible real completion to `/v1/chat/completions`
+(`model: gpt-4o-mini`, a one-word prompt, `max_tokens: 1`, streaming off). The
+gateway exposes no free, authenticated endpoint to validate a key against
+(`GET /health` is unauthenticated, `GET /v1/models` returns 404), and n8n treats
+any non-2xx test response as a failure — so a minimal completion is the only way
+to genuinely verify the key. An invalid key is rejected with `401` before any
+provider is called; an authorised key returns 2xx and the test succeeds.
+
+> **Note:** because the test performs one real 1-token completion, verifying a
+> credential generates a negligible provider charge (a fraction of a cent). The
+> test runs only when you explicitly click **Test** or save the credential —
+> never during normal execution.
 
 ## Operations
 

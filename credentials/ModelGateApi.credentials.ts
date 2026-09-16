@@ -1,4 +1,10 @@
-import type { IAuthenticateGeneric, Icon, ICredentialType, INodeProperties } from 'n8n-workflow';
+import type {
+	IAuthenticateGeneric,
+	Icon,
+	ICredentialTestRequest,
+	ICredentialType,
+	INodeProperties,
+} from 'n8n-workflow';
 
 export class ModelGateApi implements ICredentialType {
 	name = 'modelGateApi';
@@ -47,27 +53,50 @@ export class ModelGateApi implements ICredentialType {
 		},
 	};
 
-	// NOTE: No `test` property is defined — intentionally.
+	// Credential test.
 	//
-	// An n8n credential test must call an endpoint that actually validates the
-	// key AND is safe (free, side-effect-free) to call. The current ModelGate
-	// gateway contract offers no such endpoint:
-	//   - GET /health responds 200 WITHOUT a key (unauthenticated) so it cannot
-	//     verify the credential — it would be a false-positive "test".
-	//   - There is no capability-discovery endpoint (GET /v1/models returns 404;
-	//     this is the backend's known optional gap E7).
-	//   - The only authenticated endpoints are the inference endpoints
-	//     (POST /v1/chat/completions, POST /v1/llm/proxy), and firing a real
-	//     completion just to validate a key would cost money.
-	//
-	// Rather than ship a broken (/v1/models) or fake (unauthenticated /health)
-	// test, we omit it. The key is validated on the first real request, where the
-	// node surfaces 401 `invalid_api_key` clearly. If ModelGate later adds a
-	// lightweight authenticated GET endpoint, add a `test: ICredentialTestRequest`
-	// targeting it.
-	//
-	// Because n8n Cloud's strict lint tier requires a credential test that the
-	// gateway cannot currently support, this package uses the standard
-	// community-node lint tier (cloud support disabled in eslint.config.mjs /
-	// package.json). Re-enable strict once a suitable endpoint exists.
+	// The ModelGate gateway exposes no free, authenticated, side-effect-free
+	// endpoint to validate a key against:
+	//   - GET /health (and /v1/status) respond 200 WITHOUT a key, so they would
+	//     false-positive.
+	//   - There is no capability-discovery endpoint (GET /v1/models returns 404).
+	//   - The only authenticated endpoints are the inference endpoints.
+	// n8n treats any non-2xx test response as a failure, so the test must hit an
+	// endpoint that returns 2xx for a valid key. We therefore send the smallest
+	// possible real completion to /v1/chat/completions: a single-token prompt
+	// with `max_tokens: 1` and streaming off. This runs only when the user
+	// clicks "Test"/saves the credential and generates a negligible provider
+	// charge (~1 token). An invalid key returns 401 before any provider is
+	// called. The Base URL is normalised the same way as the node
+	// (see buildChatCompletionsUrl): a trailing slash or `/v1` is stripped so we
+	// never produce `.../v1/v1/chat/completions`. The API key is injected by the
+	// `authenticate` block above, so it never appears in this request definition.
+	test: ICredentialTestRequest = {
+		request: {
+			method: 'POST',
+			url: '={{$credentials.baseUrl.replace(/\\/+$/, "").replace(/\\/v1$/, "") + "/v1/chat/completions"}}',
+			body: {
+				model: 'gpt-4o-mini',
+				messages: [{ role: 'user', content: 'ping' }],
+				max_tokens: 1,
+				stream: false,
+			},
+		},
+		rules: [
+			{
+				type: 'responseCode',
+				properties: {
+					value: 401,
+					message: 'ModelGate rejected the API key (401). Check that it is correct and active.',
+				},
+			},
+			{
+				type: 'responseCode',
+				properties: {
+					value: 403,
+					message: 'ModelGate denied the request (403). The key may lack permission or a limit was hit.',
+				},
+			},
+		],
+	};
 }
