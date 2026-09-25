@@ -2,7 +2,7 @@
 	"node": "n8n-nodes-modelgate.modelGate",
 	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
-	"categories": ["AI", "Miscellaneous"],
+	"categories": ["Development", "Miscellaneous"],
 	"resources": {
 		"credentialDocumentation": [
 			{
