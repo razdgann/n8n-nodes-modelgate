@@ -31,7 +31,7 @@ export class ModelGateApi implements ICredentialType {
 			type: 'string',
 			default: 'https://gw.modelgatehq.com',
 			description:
-				'The ModelGate gateway origin (no path). The node appends /v1/chat/completions. Change this only to target a staging or self-hosted ModelGate gateway.',
+				'The ModelGate gateway origin (no path). The node appends /v1/chat/completions. A custom gateway must support GET /v1/me for credential verification.',
 		},
 	];
 
@@ -53,36 +53,20 @@ export class ModelGateApi implements ICredentialType {
 		},
 	};
 
-	// Credential test.
-	//
-	// The ModelGate gateway exposes no free, authenticated, side-effect-free
-	// endpoint to validate a key against:
-	//   - GET /health (and /v1/status) respond 200 WITHOUT a key, so they would
-	//     false-positive.
-	//   - There is no capability-discovery endpoint (GET /v1/models returns 404).
-	//   - The only authenticated endpoints are the inference endpoints.
-	// n8n treats any non-2xx test response as a failure, so the test must hit an
-	// endpoint that returns 2xx for a valid key. We therefore send the smallest
-	// possible real completion to /v1/chat/completions: a single-token prompt
-	// with `max_tokens: 1` and streaming off. This runs only when the user
-	// clicks "Test"/saves the credential and generates a negligible provider
-	// charge (~1 token). An invalid key returns 401 before any provider is
-	// called. The Base URL is normalised the same way as the node
-	// (see buildChatCompletionsUrl): a trailing slash or `/v1` is stripped so we
-	// never produce `.../v1/v1/chat/completions`. The API key is injected by the
-	// `authenticate` block above, so it never appears in this request definition.
+	// Verify key identity without making a provider request.
 	test: ICredentialTestRequest = {
 		request: {
-			method: 'POST',
-			url: '={{$credentials.baseUrl.replace(/\\/+$/, "").replace(/\\/v1$/, "") + "/v1/chat/completions"}}',
-			body: {
-				model: 'gpt-4o-mini',
-				messages: [{ role: 'user', content: 'ping' }],
-				max_tokens: 1,
-				stream: false,
-			},
+			method: 'GET',
+			url: '={{$credentials.baseUrl.replace(/\\/+$/, "").replace(/\\/v1$/, "") + "/v1/me"}}',
 		},
 		rules: [
+			{
+				type: 'responseCode',
+				properties: {
+					value: 404,
+					message: 'This gateway does not expose GET /v1/me. Check the Base URL and gateway version.',
+				},
+			},
 			{
 				type: 'responseCode',
 				properties: {
@@ -94,7 +78,7 @@ export class ModelGateApi implements ICredentialType {
 				type: 'responseCode',
 				properties: {
 					value: 403,
-					message: 'ModelGate denied the request (403). The key may lack permission or a limit was hit.',
+					message: 'ModelGate denied the request (403). Check whether the deployment or its access policy permits credential verification.',
 				},
 			},
 		],
